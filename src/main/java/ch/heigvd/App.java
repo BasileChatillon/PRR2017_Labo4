@@ -43,8 +43,8 @@ public class App {
 
         // Gestion de la GUI en ligne de commande
         Scanner scanner = new Scanner(System.in);
+        printInfo();
         while (true) {
-            printInfo();
             String input = scanner.nextLine();
             input = input.toLowerCase();
 
@@ -57,8 +57,10 @@ public class App {
                 System.out.println("Début de la fin...");
                 gestionnaire.beginEnding();
             }
+            else if (input.contains("info")) {
+                printInfo();
+            }
         }
-
     }
 
     /**
@@ -127,6 +129,11 @@ public class App {
         }
 
         return properties;
+    }
+
+    public void terminate() {
+        System.out.println("Application terminée");
+        System.exit(0);
     }
 
     public static void main(String[] args) {

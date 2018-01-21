@@ -12,9 +12,10 @@ import java.util.Random;
 public class Task extends Thread {
 
     private Gestionnaire gestionnaire;
-    private final double P = 0.5;
+    private final double P = 0.6;
     private List<Site> sitesWithoutUs;
     private Random random;
+    private final int timeToWait = 3000;
 
 
     public Task(Gestionnaire gestionnaire, List<Site> sitesWithoutUs, Site us) {
@@ -31,7 +32,7 @@ public class Task extends Thread {
         try {
             socket = new DatagramSocket();
 
-            sleep(3000);
+            sleep(timeToWait);
 
             Site toSend;
             byte[] message;
@@ -42,7 +43,7 @@ public class Task extends Thread {
                 System.out.println("Task.run : Création d'une nouvelle tache sur le site n°" + toSend.getNumber());
                 packet = new DatagramPacket(message, message.length, toSend.getIp(), toSend.getPort());
                 socket.send(packet);
-                sleep(3000);
+                sleep(timeToWait);
             }
         } catch (SocketException e) {
             System.err.println("Task.run : Erreur lors de la création du socket d'envoie");

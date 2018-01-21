@@ -18,6 +18,7 @@ public class Gestionnaire extends Thread {
     private DatagramSocket socket;
     private boolean mustTerminate;
     private boolean hasInitializedEnd;
+    private boolean isRunning;
 
     private Object object;
     private int numberTasksRunning;
@@ -38,6 +39,7 @@ public class Gestionnaire extends Thread {
             System.err.println("App.App : Erreur lors de la création du socket");
             e.printStackTrace();
         }
+        this.isRunning = true;
 
         this.object = new Object();
         this.numberTasksRunning = 0;
@@ -51,7 +53,7 @@ public class Gestionnaire extends Thread {
 
         // Attente de réception d'un message
         try {
-            while (true) {
+            while (isRunning) {
                 socket.receive(packetReceived);
 
                 // Récupération du message
@@ -60,7 +62,6 @@ public class Gestionnaire extends Thread {
 
                 switch (Message.getTypeOfMessage(message)) {
                     case TASK:
-                        System.out.println("Gestionnaire.run : Création d'une nouvelle tache.");
                         createTask();
                         break;
 
@@ -97,6 +98,9 @@ public class Gestionnaire extends Thread {
                             System.out.println("Gestionnaire.run : On a terminé!");
                             sendMessage(message);
                         }
+
+                        isRunning = false;
+                        app.terminate();
 
                         break;
                 }
