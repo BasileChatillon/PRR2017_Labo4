@@ -15,7 +15,7 @@ public class Message {
         byte[] message = new byte[1];
 
         // Ajout du type de message au début du buffer
-        message[0] = TypeMessage.TACHE.getValueMessage();
+        message[0] = TypeMessage.TASK.getValueMessage();
 
         return message;
     }

@@ -51,30 +51,55 @@ public class Gestionnaire extends Thread {
 
         // Attente de réception d'un message
         try {
-            socket.receive(packetReceived);
+            while (true) {
+                socket.receive(packetReceived);
 
-            // Récupération du message
-            byte[] message = new byte[packetReceived.getLength()];
-            System.arraycopy(packetReceived.getData(), packetReceived.getOffset(), message, 0, packetReceived.getLength());
+                // Récupération du message
+                byte[] message = new byte[packetReceived.getLength()];
+                System.arraycopy(packetReceived.getData(), packetReceived.getOffset(), message, 0, packetReceived.getLength());
 
-            switch (Message.getTypeOfMessage(message)) {
-                case TASK:
-                    createTask();
-                    break;
+                switch (Message.getTypeOfMessage(message)) {
+                    case TASK:
+                        System.out.println("Gestionnaire.run : Création d'une nouvelle tache.");
+                        createTask();
+                        break;
 
-                case JETON:
-                    if (hasInitializedEnd && numberTasksRunning == 0) {
-                        byte[] newMessage = Message.createEnd();
+                    case JETON:
+                        mustTerminate = true;
+                        System.out.println("Gestionnaire.run : Récéption d'un jeton");
+                        byte[] newMessage;
+
+                        synchronized (object) {
+                            if (numberTasksRunning != 0) {
+                                try {
+                                    System.out.println("Gestionnaire.run : Attente de la terminaison des tâches");
+                                    object.wait();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        if (hasInitializedEnd) {
+                            newMessage = Message.createEnd();
+                        } else {
+                            newMessage = message;
+                        }
+
                         sendMessage(newMessage);
-                    } else {
+                        break;
 
-                    }
+                    case END:
+                        System.out.println("Gestionnaire.run : Récéption d'un la fin");
+                        if (hasInitializedEnd) {
+                            System.out.println("Gestionnaire.run : Tout est terminé!");
+                        } else {
+                            System.out.println("Gestionnaire.run : On a terminé!");
+                            sendMessage(message);
+                        }
 
-                    break;
-
-                case END:
-
-                    break;
+                        break;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -97,17 +122,16 @@ public class Gestionnaire extends Thread {
         }
     }
 
-
     public void createTask() {
         if (!mustTerminate) {
-            new Task(this, sites).start();
+            new Task(this, sites, us).start();
 
             synchronized (object) {
                 numberTasksRunning++;
+                System.out.println("Gestionnaire.createTask : nouvelle tache (en cours : " + numberTasksRunning + ")");
             }
         }
     }
-
 
     public void beginEnding() {
         hasInitializedEnd = true;
@@ -120,10 +144,10 @@ public class Gestionnaire extends Thread {
     public void endTask() {
         synchronized (object) {
             numberTasksRunning--;
-        }
-
-        if (numberTasksRunning == 0) {
-
+            System.out.println("Gestionnaire.endTask : Fin de la tache (restabte : " + numberTasksRunning + ")");
+            if (numberTasksRunning == 0) {
+                object.notifyAll();
+            }
         }
     }
 }

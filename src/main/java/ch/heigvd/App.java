@@ -50,6 +50,7 @@ public class App {
 
             if (input.contains("tache"))
             {
+                System.out.println("Création d'une tache...");
                 gestionnaire.createTask();
             }
             else if (input.contains("fin")) {
