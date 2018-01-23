@@ -8,20 +8,26 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Task extends Thread {
 
     private Gestionnaire gestionnaire;
     private final double P = 0.6;
-    private List<Site> sitesWithoutUs;
+    private List<Integer> sitesNumberWithoutUs;
+    private Site neighbour;
     private Random random;
     private final int timeToWait = 3000;
 
 
-    public Task(Gestionnaire gestionnaire, List<Site> sitesWithoutUs, Site us) {
+    public Task(Gestionnaire gestionnaire, List<Site> sites, Site us, Site neighbour) {
         this.gestionnaire = gestionnaire;
-        this.sitesWithoutUs = sitesWithoutUs;
-        sitesWithoutUs.remove(us);
+        this.sitesNumberWithoutUs = sites.stream()
+                .filter(site -> site.getNumber() != us.getNumber())
+                .map(site -> site.getNumber())
+                .collect(Collectors.toList());
+
+        this.neighbour = neighbour;
         this.random = new Random();
     }
 
@@ -34,14 +40,15 @@ public class Task extends Thread {
 
             sleep(timeToWait);
 
-            Site toSend;
+            int toSend;
             byte[] message;
 
             while (Math.random() < P) {
-                toSend = sitesWithoutUs.get(random.nextInt(sitesWithoutUs.size()));
-                message = Message.createTache();
-                System.out.println("Task.run : Création d'une nouvelle tache sur le site n°" + toSend.getNumber());
-                packet = new DatagramPacket(message, message.length, toSend.getIp(), toSend.getPort());
+                toSend = sitesNumberWithoutUs.get(random.nextInt(sitesNumberWithoutUs.size()));
+                message = Message.createTask(toSend);
+                System.out.println("Task.run : Création d'une nouvelle tache sur le site n°" + toSend);
+
+                packet = new DatagramPacket(message, message.length, neighbour.getIp(), neighbour.getPort());
                 socket.send(packet);
                 sleep(timeToWait);
             }

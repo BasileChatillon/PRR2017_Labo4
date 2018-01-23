@@ -19,6 +19,7 @@ public class Gestionnaire extends Thread {
     private boolean mustTerminate;
     private boolean hasInitializedEnd;
     private boolean isRunning;
+    private boolean actif;
 
     private Object object;
     private int numberTasksRunning;
@@ -32,6 +33,7 @@ public class Gestionnaire extends Thread {
         this.neighbour = sites.get((us.getNumber() + 1) % sites.size());
         this.mustTerminate = false;
         this.hasInitializedEnd = false;
+        this.actif = false;
 
         try {
             this.socket = new DatagramSocket(us.getPort());
@@ -62,7 +64,13 @@ public class Gestionnaire extends Thread {
 
                 switch (Message.getTypeOfMessage(message)) {
                     case TASK:
-                        createTask();
+                        int siteNumber = Message.extractSiteNumberFromTaskMessage(message);
+                        actif = true;
+                        if (siteNumber == us.getNumber()) {
+                            _createTask();
+                        } else {
+                            sendMessage(message);
+                        }
                         break;
 
                     case JETON:
@@ -70,20 +78,20 @@ public class Gestionnaire extends Thread {
                         System.out.println("Gestionnaire.run : Récéption d'un jeton");
                         byte[] newMessage;
 
-                        synchronized (object) {
-                            if (numberTasksRunning != 0) {
-                                try {
-                                    System.out.println("Gestionnaire.run : Attente de la terminaison des tâches");
-                                    object.wait();
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-
-                        if (hasInitializedEnd) {
+                        if (hasInitializedEnd && !actif) {
                             newMessage = Message.createEnd();
                         } else {
+                            synchronized (object) {
+                                if (numberTasksRunning != 0) {
+                                    try {
+                                        System.out.println("Gestionnaire.run : Attente de la terminaison des tâches");
+                                        object.wait();
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            actif = false;
                             newMessage = message;
                         }
 
@@ -128,12 +136,17 @@ public class Gestionnaire extends Thread {
 
     public void createTask() {
         if (!mustTerminate) {
-            new Task(this, sites, us).start();
+            _createTask();
+            actif = true;
+        }
+    }
 
-            synchronized (object) {
-                numberTasksRunning++;
-                System.out.println("Gestionnaire.createTask : nouvelle tache (en cours : " + numberTasksRunning + ")");
-            }
+    private void _createTask() {
+
+        new Task(this, sites, us, neighbour).start();
+        synchronized (object) {
+            numberTasksRunning++;
+            System.out.println("Gestionnaire.createTask : nouvelle tache (en cours : " + numberTasksRunning + ")");
         }
     }
 
