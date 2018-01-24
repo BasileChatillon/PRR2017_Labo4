@@ -13,8 +13,8 @@ import java.util.Scanner;
  * Hello world!
  */
 public class App {
-    private final String propertiesFileName = "site.properties";
-    private Gestionnaire gestionnaire;
+    private final String propertiesFileName = "site.properties"; // Le ficher ou se trouves les différentes propriétés
+    private Gestionnaire gestionnaire; // Le gestionnaire du site qui s'occupe de l'échange des messages et de la création de tache
 
     public App(int siteNumber) {
         // Récupération des propriétés dans le but d'y extraire des informations
@@ -33,31 +33,36 @@ public class App {
         for (Site site : sites) {
             System.out.println(site);
         }
+        // Création et lancement du gestionnaire
         this.gestionnaire = new Gestionnaire(this, sites, siteNumber);
         this.gestionnaire.start();
 
         demarrer();
     }
 
+    /**
+     * Méthode qui lance la routine permettant de récupérer l'entrée de l'utilisateur et faire le travail associé.
+     */
     private void demarrer() {
 
         // Gestion de la GUI en ligne de commande
         Scanner scanner = new Scanner(System.in);
         printInfo();
         while (true) {
+            // Récupération de l'entrée
             String input = scanner.nextLine();
             input = input.toLowerCase();
 
-            if (input.contains("tache"))
-            {
-                System.out.println("Création d'une tache...");
-                gestionnaire.createTask();
-            }
-            else if (input.contains("fin")) {
+            if (input.contains("tache")) {
+                if (gestionnaire.createTask()) {
+                    System.out.println("Création d'une tache...");
+                } else {
+                    System.out.println("Création d'une tache impossible pendant la terminaison");
+                }
+            } else if (input.contains("fin")) {
                 System.out.println("Début de la fin...");
                 gestionnaire.beginEnding();
-            }
-            else if (input.contains("info")) {
+            } else if (input.contains("info")) {
                 printInfo();
             }
         }
@@ -69,13 +74,14 @@ public class App {
     private static void printInfo() {
         System.out.println();
         System.out.println("Entrez les différentes valeurs :");
-        System.out.println("TACHE pour démarrer une nouvelle tache");
-        System.out.println("FIN pour démarrer la terminaison");
+        System.out.println("INFO pour afficher les différentes commandes.");
+        System.out.println("TACHE pour démarrer une nouvelle tache.");
+        System.out.println("FIN pour démarrer la terminaison.");
         System.out.print("> ");
     }
 
     /**
-     * Fonction qui permet de récupérer tous les sites contenu dans le ficher site.properties.
+     * Fonction qui permet de récupérer tous les sites contenus dans le ficher site.properties.
      *
      * @param properties L'instance de properties dans laquelle sont stockées les différentes propriétés à récupérer
      * @return La liste des sites.
@@ -131,6 +137,9 @@ public class App {
         return properties;
     }
 
+    /**
+     * Permet de terminer l'application
+     */
     public void terminate() {
         System.out.println("Application terminée");
         System.exit(0);
@@ -142,8 +151,9 @@ public class App {
             System.err.println("main : Invalid argument, you need to pass a site number");
             System.exit(1);
         }
-        int number = Integer.parseInt(args[0]);
 
+        // Extraction du paramètre et lancement de l'application
+        int number = Integer.parseInt(args[0]);
         new App(number);
     }
 }

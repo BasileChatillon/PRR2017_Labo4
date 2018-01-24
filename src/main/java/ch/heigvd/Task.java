@@ -12,57 +12,56 @@ import java.util.stream.Collectors;
 
 public class Task extends Thread {
 
-    private Gestionnaire gestionnaire;
-    private final double P = 0.6;
-    private List<Integer> sitesNumberWithoutUs;
-    private Site neighbour;
+    private final int timeToWaitMin = 10000; // Le temps qu'une tache va dormir au minimum
+    private final int timeToWaitMax = 20000; // Le temps qu'une tache va dormir au maximum
+
+    private final double P = 0.3; // La probabilité qu'un tache en crée une autre
+
+    private Gestionnaire gestionnaire; // Le gestionnaire pour qui on execute la tache
+    private int numberOfSite; // Le nombre de site présent dans l'anneau
+    private int ourNumber; // Notre numéro de site
     private Random random;
-    private final int timeToWait = 3000;
 
 
-    public Task(Gestionnaire gestionnaire, List<Site> sites, Site us, Site neighbour) {
+    public Task(Gestionnaire gestionnaire, int numberOfSite, int ourNumber) {
         this.gestionnaire = gestionnaire;
-        this.sitesNumberWithoutUs = sites.stream()
-                .filter(site -> site.getNumber() != us.getNumber())
-                .map(site -> site.getNumber())
-                .collect(Collectors.toList());
-
-        this.neighbour = neighbour;
+        this.numberOfSite = numberOfSite;
+        this.ourNumber = ourNumber;
         this.random = new Random();
     }
 
     public void run() {
-
-        DatagramSocket socket;
-        DatagramPacket packet;
         try {
-            socket = new DatagramSocket();
 
-            sleep(timeToWait);
+            sleep(random.nextInt(timeToWaitMax - timeToWaitMin) + timeToWaitMin);
 
-            int toSend;
-            byte[] message;
+            
+            int siteToCreateTask; // Variable qui va potentiellement recueuillir le site sur lequel on va créer une tache
+            byte[] messageTask; // Le message qui sera potentiellement envoyé au site qui doit créer la tache
 
             while (Math.random() < P) {
-                toSend = sitesNumberWithoutUs.get(random.nextInt(sitesNumberWithoutUs.size()));
-                message = Message.createTask(toSend);
-                System.out.println("Task.run : Création d'une nouvelle tache sur le site n°" + toSend);
 
-                packet = new DatagramPacket(message, message.length, neighbour.getIp(), neighbour.getPort());
-                socket.send(packet);
-                sleep(timeToWait);
+                // Pour tirer un site aléatoire sauf nous, on tire un numéro entre 0 et n-2. Si le numéro est le notre
+                // alors on dit que c'est le dernier site
+                siteToCreateTask = random.nextInt(numberOfSite - 1);
+                if(siteToCreateTask == ourNumber) {
+                    siteToCreateTask = numberOfSite - 1;
+                }
+
+                // Création du message et envoie de celui-ci via notre gestionnaire
+                System.out.println("Task.run : Création d'une nouvelle tache sur le site n°" + siteToCreateTask);
+                messageTask = Message.createTask(siteToCreateTask);
+                gestionnaire.sendMessage(messageTask);
+
+
+                sleep(random.nextInt(timeToWaitMax - timeToWaitMin) + timeToWaitMin);
             }
-        } catch (SocketException e) {
-            System.err.println("Task.run : Erreur lors de la création du socket d'envoie");
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.err.println("Task.run : Erreur lors de l'envoie du paquet");
-            e.printStackTrace();
         } catch (Exception e) {
             System.err.println("Task.run : Erreur lors du sleep de la tache");
             e.printStackTrace();
         }
 
+        // Une fois que la tâche est terminée on va notifier le gestionnaire pour qu'il decrémente une tache
         gestionnaire.endTask();
     }
 }
