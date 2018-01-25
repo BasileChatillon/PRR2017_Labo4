@@ -10,23 +10,25 @@ import java.util.Properties;
 import java.util.Scanner;
 
 /**
- * Marche à suivre :
- * Pour lancer l'application, il faut lancer 4 fois le programme en lui passant en param
- * le numéro du site (de 0 à 3)
+ * MARCHE A SUIVRE :
+ * Pour lancer l'application, il faut lancer 4 fois le programme en lui passant en
+ * paramètre le numéro du site (de 0 à 3)
  *
  *
- * Conception:
+ * CONCEPTION :
  * Pour faire ce programme, nous sommes partis du principe que chaque site connait son
- * voisin directement, pour cela, il va parcourir le fichier de propriétés pour y récupérer
- * tous les adresses de tous les sites et d'y extraire son voisin directe.
+ * voisin directement. Pour cela, il va parcourir le fichier de propriétés pour y récupérer
+ * toutes les adresses de tous les sites et d'y extraire son voisin directe.
  *
  * Nous avons créé trois types de messages:
- * - Le message du JETON : Il permet d'annoncer que le site doit commencer à terminer.
+ * - Le message JETON : Il permet d'annoncer que le site doit commencer à terminer.
  *   Il est composé d'un unique byte qui représente le type du message.
- * - Le message de FIN : permet d'annoncer que tous les sites ont terminé leur traitement.
+ *
+ * - Le message FIN : permet d'annoncer que tous les sites ont terminé leur traitement.
  *   Il est composé d'un unique byte qui représente le type du message
- * - Le message de TACHE : permet de créer sur un site une tache. Compte tenu que les sites
- *   ne peuvent que communiquer à leur voisin, il faut qu'un site puisse savoir s'il doit lancer
+ *
+ * - Le message TACHE : permet de créer sur un site une tâche. Vu que les sites ne
+ *   peuvent communiquer qu'à leur voisin, il faut qu'un site puisse savoir s'il doit lancer
  *   une tache. C'est pour cela que le message est composé de 5 bytes : 1 pour le type du message
  *   et 4 byte qui représente un int qui est le site sur lequel doit être lancé la tache.
  *   Lorsqu'un site reçoit un message de tache, il extrait le numéro, si c'est le sien il
@@ -34,62 +36,67 @@ import java.util.Scanner;
  *
  * Pour remplir les conditions de ce laboratoire nous avons 2 threads:
  * Le premier est le "main" qui va s'occuper de faire la gestion des entrées de l'utilisateur
- * Le deuxipme est le "gestionnaire" qui lui va s'occuper de lire les messages et les
+ * Le deuxième est le "gestionnaire" qui lui va s'occuper de lire les messages et les
  * traiter en fonction du type de message.
- * Le gestionnaire est également capable de créer des threads "taches".
+ * Le gestionnaire est également capable de créer des threads "tâches".
  *
- * Pour que le gestionnaire connaisse le nombre de tache en cours, nous avons d'utiliser
- * une variable qui ressence le nombre de tache en cours. A chaque fois que le gestionnaire
- * crée une tache, il va incrémenter ce compteur. Lorsqu'une tache se finit, elle va notifier
- * le gestionnnaire et il décrémentera le compteur.
- * Compte tenu que ce compteur est donc une variable partagée, nous utilisons un objet pour
- * garentir l'exclusion mutuelle au travers du synchronized.
+ * Pour que le gestionnaire connaisse le nombre de tâche en cours, nous avons décidé
+ * d'utiliser une variable qui ressence le nombre de tache en cours. A chaque fois que
+ * le gestionnaire crée une tâche, il va incrémenter ce compteur. Lorsqu'une tâche se
+ * finit, elle va notifier le gestionnaire et il décrémentera le compteur.
+ * Compte tenu que ce compteur est donc une variable partagée, nous utilisons un objet
+ * pour garantir l'exclusion mutuelle au travers du synchronized.
  *
  * Une des spécialités est que le gestionnaire recoit un message JETON et qu'il est actif
- * alors il va attendre que toutes les taches soient terminées. Pour cela, on fait un wait
- * sur l'objet pour ne pas faire de l'attente active. Lorsqu'une tache se termine et que
+ * alors il va attendre que toutes les tâches soient terminées. Pour cela, on fait un wait
+ * sur l'objet pour ne pas faire de l'attente active. Lorsqu'une tâche se termine et que
  * c'est la dernière en cours, alors nous notifions l'objet.
  *
- * Bien que nous possédions une variable qui compte le nombre de tache en cours, nous sommes
+ * Bien que nous possédions une variable qui compte le nombre de tâche en cours, nous sommes
  * obligés d'avoir un booléan "actif" qui détermine si le site est actif ou non. En effet,
  * si un site inactif reçoit un message TACHE et que ce n'est pas lui qui doit créer la TACHE,
  * alors il faut quand même qu'il redevienne actif pour satisfaire la spéc. Le compteur ne
  * suffit donc pas.
  *
- * Lorsque dès que le gestionnaire reçoit un JETON, il empéchera l'utilisateur de créer de
+ * Dès que le gestionnaire reçoit un JETON, il empêchera l'utilisateur de créer de
  * nouvelle tâche.
  *
  * Une fois que le gestionnaire reçoit le message de fin, il va terminer le thread de son
  * site et il va sortir de sa boucle. Cela permet de bien terminer l'application.
  * Pour terminer le site, nous faisons un System.exit(0). Nous aurions pu faire en sorte
  * de sortir de la boucle while qui demande à l'utilisateur de finir, mais pour cela,
- * il devait encore entrer une mot pour passer l'attente du scanner.nextLine(). Ce que
- * nous trouvions pas terrible.
+ * il devait encore entrer une mot pour passer l'attente du scanner.nextLine(), ce que
+ * nous ne trouvions pas ergonomique.
  *
  *
- * TESTS
- * Pour tester l'application, nous avons premièrement vérifier que les tachent se crée bien
- * sur le site ainsi que les taches se créent bien sur les autres sites.
+ * TESTS :
+ * Pour tester l'application, nous avons premièrement vérifier que les tâches se créent
+ * bien sur le site ainsi que les tâches se créent bien sur les autres sites.
  *
- * Nous avons ensuite testé la terminaison sans avoir créé aucune tache préalablement.
+ * Nous avons ensuite testé la terminaison sans avoir créé de tache au préalable.
  *
- * Nous avons ensuite lancer des taches avec un grand temps de calcule (elles dorment longtemps)
- * Sur un site, puis nous avons lancé la terminaison surle même site. On a pu constater qu'
- * il attend bien avant d'envoyer le JETON. Nous avons également constaté que dès lors
- * l'utilisateur ne peut plus créer de tache sur le site, ce qui est correcte. Nous avons
- * également pu constater que le site suivant attend également de finir ses taches (s'il en
- * a) avant d'envoyer le JETON
+ * Nous avons également lancer des tâches avec un grand temps de calcul (elles dorment longtemps)
+ * sur un site, puis nous avons lancé la terminaison sur ce même site. On a pu constater
+ * qu'il attend bien avant d'envoyer le JETON. Nous avons également constaté que
+ * l'utilisateur ne peut plus créer de tâche sur le site, ce qui est correcte. Nous avons
+ * également pu constater que le site suivant attend également de finir ses tâches (s'il
+ * en a) avant d'envoyer le JETON.
  *
- * Le dernier test que nous avons effectuer est les tours mutltiples du JETON. Pour se faire
- * nous avons lanceé une tache sur le site 0, et tout de suite après, lancé la terminaison
+ * Le dernier test que nous avons effectué est les tours mutltiples du JETON. Pour se faire
+ * nous avons lanceé une tâche sur le site 0, et tout de suite après, lancé la terminaison
  * depuis celui-ci. Nous avons fait en sorte de pouvoir quand même lancer des taches en tant
  * qu'utilisateur, cela nous a permis de créer une tache après que celui-ci aie envoyé le JETON
  * Une fois qu'il reçoit le JETON, il le ré-envoie car il n'était plus inactif
- *
  */
 public class App {
-    private final String propertiesFileName = "site.properties"; // Le ficher ou se trouves les différentes propriétés
-    private Gestionnaire gestionnaire; // Le gestionnaire du site qui s'occupe de l'échange des messages et de la création de tache
+    /**
+     * Le ficher où se trouve les différentes propriétés
+     */
+    private final String propertiesFileName = "site.properties";
+    /**
+     * Le gestionnaire du site qui s'occupe de l'échange des messages et de la création de tache
+     */
+    private Gestionnaire gestionnaire;
 
     public App(int siteNumber) {
         // Récupération des propriétés dans le but d'y extraire des informations
@@ -116,7 +123,8 @@ public class App {
     }
 
     /**
-     * Méthode qui lance la routine permettant de récupérer l'entrée de l'utilisateur et faire le travail associé.
+     * Méthode qui lance la routine permettant de récupérer l'entrée de l'utilisateur et faire
+     * le travail associé.
      */
     private void demarrer() {
 
@@ -125,7 +133,7 @@ public class App {
         printInfo();
         while (true) {
             // Récupération de l'entrée
-            String input = c
+            String input = scanner.nextLine();
             input = input.toLowerCase();
 
             if (input.contains("tache")) {
@@ -190,8 +198,9 @@ public class App {
 
     /**
      * Permet de récupérer une instance de la class Properties du fichier de propriétés sites.properties.
-     * Cela permet ensuite de passer cette instance à différentes méthode pour y récupérer différents élements
-     * <p>
+     * Cela permet ensuite de passer cette instance à différentes méthode pour y récupérer différents
+     * élements.
+     *
      * Lance une exception si le ficher .properties n'est pas trouvé
      *
      * @return un instance de Properties

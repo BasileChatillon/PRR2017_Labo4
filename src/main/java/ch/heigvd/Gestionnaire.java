@@ -16,10 +16,10 @@ public class Gestionnaire extends Thread {
     private Site neighbour; // Le site voisin
 
     private DatagramSocket socket; // Le socket que l'on va utiliser pour recevoir et envoyer des messages
-    private boolean mustTerminate; // Définit si le site à reçe le jeton
-    private boolean hasInitializedEnd; // Définit si le site à lancer la terminaison des sites
-    private boolean isRunning; // Détérmine si le thread est actif (utile pour finir le thread)
-    private boolean actif; // Détermine si le gestionnaire est toujour actif vis-à-vis de la procédure de terminaison
+    private boolean mustTerminate; // Défini si le site a reçu le jeton
+    private boolean hasInitializedEnd; // Défini si le site a lancé la terminaison des sites
+    private boolean isRunning; // Défini si le thread est actif (utile pour finir le thread)
+    private boolean actif; // Défini si le gestionnaire est toujour actif vis-à-vis de la procédure de terminaison
 
     private Object object; // Object pour faire de l'exculsion mutuelle
     private int numberTasksRunning; // Le nombre de tache en cours sur le site
@@ -79,29 +79,31 @@ public class Gestionnaire extends Thread {
                         break;
 
                     case JETON:
-                        // Une fois le Jeton reçu, on met que le site doit terminer pour empéccher l'utilisateur du site de créer d'autres taches
+                        // Une fois le Jeton reçu, on met que le site doit terminer pour
+                        // empécher l'utilisateur du site de créer d'autres taches
                         mustTerminate = true;
                         System.out.println("Gestionnaire.run : Récéption d'un jeton");
                         byte[] newMessage;
 
-                        // Si on est le site qui a initialisé la terminaison et qu'on est inactif alors on débute la fin
+                        // Si on est le site qui a initialisé la terminaison et qu'on
+                        // est inactif alors on débute la fin
                         if (hasInitializedEnd && !actif) {
                             // On crée le message de fin
                             newMessage = Message.createEnd();
                         } else {
-                            // Si commence par attendre que toutes les taches soient terminée.
+                            // Si commence par attendre que toutes les taches soient terminées.
                             waitForTaskToEnd();
 
                             newMessage = message;
                         }
 
-                        // Envoie du message de fin ou forward du jeton
+                        // Envoi du message de fin ou forward du jeton
                         sendMessage(newMessage);
                         break;
 
                     case END:
-                        System.out.println("Gestionnaire.run : Récéption d'un la fin");
-                        // Dans le cas ou le message de fin à fait le tour alors, on ne le renvoie pas
+                        System.out.println("Gestionnaire.run : Réception d'un message de fin");
+                        // Dans le cas ou le message de fin a fait le tour alors, on ne le renvoie pas
                         if (hasInitializedEnd) {
                             System.out.println("Gestionnaire.run : Tout est terminé!");
                         } else {

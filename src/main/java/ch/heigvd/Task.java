@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+/**
+ * Classe qui représente le traitement d'une tâche
+ */
 public class Task extends Thread {
 
     private final int timeToWaitMin = 10000; // Le temps qu'une tache va dormir au minimum
@@ -34,7 +37,6 @@ public class Task extends Thread {
         try {
 
             sleep(random.nextInt(timeToWaitMax - timeToWaitMin) + timeToWaitMin);
-
             
             int siteToCreateTask; // Variable qui va potentiellement recueuillir le site sur lequel on va créer une tache
             byte[] messageTask; // Le message qui sera potentiellement envoyé au site qui doit créer la tache
@@ -48,7 +50,8 @@ public class Task extends Thread {
                     siteToCreateTask = numberOfSite - 1;
                 }
 
-                // Création du message et envoie de celui-ci via notre gestionnaire
+                // Création du message et envoie de celui-ci via notre gestionnaire (vu que le gestionnaire
+                // connait le voisin, c'est plus simple)
                 System.out.println("Task.run : Création d'une nouvelle tache sur le site n°" + siteToCreateTask);
                 messageTask = Message.createTask(siteToCreateTask);
                 gestionnaire.sendMessage(messageTask);

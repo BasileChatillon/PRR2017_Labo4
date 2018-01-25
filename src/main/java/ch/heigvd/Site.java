@@ -3,7 +3,7 @@ package ch.heigvd;
 import java.net.InetAddress;
 
 /**
- * La classe Site représente toutes le informations utiles pour pouvoir localiser un site. (en tout cas son IP
+ * La classe Site représente toutes les informations utiles pour pouvoir localiser un site. (en tout cas son IP
  * et son numéro de port).
  * Elle contient également un numéro qui permet de l'identifier.
  */

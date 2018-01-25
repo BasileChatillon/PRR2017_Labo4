@@ -1,18 +1,18 @@
 package ch.heigvd.utils;
 
 /**
- * Classe qui regroupe et implémente les différentes méthodes utiles à la création de message ou à la lecture des
- * messages échangés dans la procédure.
+ * Classe qui regroupe et implémente les différentes méthodes utiles à la
+ * création de message ou à la lecture des messages échangés dans la procédure.
  */
 public class Message {
     /**
      * Permet de créer un message de Task
      *
-     * @param siteNumber Le numéro du site sur lequel on veut créer une tache
+     * @param siteNumber Le numéro du site sur lequel on veut créer une tâche
      * @return Un tableau de byte représentant le message
      */
     public static byte[] createTask(int siteNumber) {
-        // On crée un buffer de la bonne taille (1 byte pour le type + 4byte pour le numero ud site)
+        // On crée un buffer de la bonne taille (1 byte pour le type + 4byte pour le numero du site)
         byte[] message = new byte[5];
 
         // Ajout du type de message au début du buffer
@@ -28,7 +28,8 @@ public class Message {
     }
 
     /**
-     * Permet de récupérer depuis un message de tache le numéro du site sur lequel la tache doit être lancée
+     * Permet de récupérer depuis un message de tâche le numéro du site sur lequel
+     * la tâche doit être lancée
      *
      * @param message Le message dont on veut extraire les informations
      * @return Le numéro du site
